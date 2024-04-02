@@ -63,10 +63,18 @@ func build(cls *Clause, values []any) (string, []any) {
 	case OP_IS_NULL, OP_NOT_NULL:
 		stm = cls.Field + " " + cls.Operator
 	case OP_IN, OP_NOT_IN:
-		stm = cls.Field + " " + cls.Operator + " (" + strings.TrimRight(strings.Repeat("?,", len(cls.Value.([]interface{}))), ",") + ")"
+		if cls.Encrypted {
+			stm = "AES_DECRYPT(" + cls.Field + ", '" + db_encrypt_key + "') " + cls.Operator + " (" + strings.TrimRight(strings.Repeat("?,", len(cls.Value.([]interface{}))), ",") + ")"
+		} else {
+			stm = cls.Field + " " + cls.Operator + " (" + strings.TrimRight(strings.Repeat("?,", len(cls.Value.([]interface{}))), ",") + ")"
+		}
 		values = append(values, cls.Value.([]interface{})...)
 	default:
-		stm = cls.Field + " " + cls.Operator + " ?"
+		if cls.Encrypted {
+			stm = "AES_DECRYPT(" + cls.Field + ", '" + db_encrypt_key + "') " + cls.Operator + " ?"
+		} else {
+			stm = cls.Field + " " + cls.Operator + " ?"
+		}
 		values = append(values, cls.Value)
 	}
 	return stm, values
@@ -90,12 +98,13 @@ func buildHasChildren(cls *Clause, values []interface{}) (string, []interface{})
 /*
 NewClause creates a new clause.
 */
-func newClause(field, operator string, value interface{}, children ...*Clause) *Clause {
+func newClause(field, operator string, value interface{}, encrypted bool, children ...*Clause) *Clause {
 	return &Clause{
-		Field:    safeField(field),
-		Operator: operator,
-		Value:    value,
-		Children: children,
+		Field:     safeField(field),
+		Operator:  operator,
+		Value:     value,
+		Children:  children,
+		Encrypted: encrypted,
 	}
 }
 

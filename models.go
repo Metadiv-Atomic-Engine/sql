@@ -12,8 +12,9 @@ type Sorting struct {
 }
 
 type Clause struct {
-	Field    string    `json:"field"`
-	Operator string    `json:"operator"`
-	Value    any       `json:"value"`
-	Children []*Clause `json:"children"`
+	Field     string    `json:"field"`
+	Operator  string    `json:"operator"`
+	Value     any       `json:"value"`
+	Encrypted bool      `json:"encrypted"`
+	Children  []*Clause `json:"children"`
 }
